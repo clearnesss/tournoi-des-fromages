@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Tournoi des Fromages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fbf6ea; --card:#fffdf7; --ink:#2b2418; --muted:#7a6d58; --line:#e8dcc2;
+    --accent:#d98e04; --accent-dark:#a86a00; --win:#3f7d3a; --lose:#b9ad97;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+  header{padding:22px 20px 8px;text-align:center}
+  h1{font-family:Fraunces,serif;font-weight:800;font-size:clamp(28px,5vw,44px);margin:0;letter-spacing:-.5px}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--muted);margin-top:6px;font-size:15px}
+  main{max-width:1000px;margin:0 auto;padding:12px 18px 40px}
+  button{font-family:inherit;cursor:pointer}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:999px;padding:12px 26px;font-size:16px;font-weight:600;transition:transform .1s,background .2s}
+  .btn:hover{background:var(--accent-dark)} .btn:active{transform:scale(.97)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+  .btn.ghost:hover{background:#f3ead6}
+  .btn:disabled{opacity:.4;cursor:default}
+  .center{text-align:center}
+  .hidden{display:none!important}
+
+  /* Intro */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:22px 0 28px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px}
+  .rules{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 20px;max-width:620px;margin:0 auto 26px;line-height:1.55;font-size:15px;color:#4a3f2c}
+
+  /* Match */
+  .meta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .round{font-family:Fraunces,serif;font-size:22px;font-weight:600}
+  .count{color:var(--muted);font-size:14px}
+  .bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:22px}
+  .bar>div{height:100%;background:var(--accent);transition:width .3s}
+  .duel{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:stretch}
+  .vs{align-self:center;font-family:Fraunces,serif;font-weight:800;font-size:28px;color:var(--accent)}
+  .cheese{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:22px 18px 20px;text-align:center;transition:transform .15s,border-color .15s,box-shadow .15s;display:flex;flex-direction:column;align-items:center}
+  .cheese:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 10px 24px rgba(160,110,0,.15)}
+  .cheese.picked{border-color:var(--win);transform:scale(1.03)}
+  .cheese.dropped{opacity:.35;transform:scale(.97)}
+  .cheese svg{width:120px;height:96px;margin-bottom:8px}
+  .cheese h2{font-family:Fraunces,serif;font-size:26px;margin:4px 0 6px}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
+  .tag{font-size:12px;background:#f3ead6;color:#6b5a3a;padding:3px 9px;border-radius:99px}
+  .desc{color:#5b4f3b;font-size:14px;line-height:1.45;margin:0}
+  .key{margin-top:12px;font-size:12px;color:var(--muted)}
+  .actions{display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap}
+  @media (max-width:640px){
+    .duel{grid-template-columns:1fr;gap:10px}
+    .vs{font-size:20px;text-align:center}
+    .cheese{padding:14px}
+    .cheese svg{width:84px;height:66px}
+    .key{display:none}
+  }
+
+  /* Bracket */
+  .bracket-wrap{overflow-x:auto;margin-top:26px;padding-bottom:8px}
+  .bracket{display:flex;gap:14px;min-width:max-content}
+  .col{display:flex;flex-direction:column;min-width:150px}
+  .col .body{display:flex;flex-direction:column;justify-content:space-around;gap:8px;flex:1}
+  .col h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 4px;text-align:center}
+  .m{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13px}
+  .m.current{border-color:var(--accent);box-shadow:0 0 0 2px rgba(217,142,4,.25)}
+  .m div{padding:5px 9px;white-space:nowrap}
+  .m div+div{border-top:1px solid var(--line)}
+  .m .w{font-weight:600;color:var(--win)}
+  .m .l{color:var(--lose);text-decoration:line-through}
+  .m .tbd{color:#c9bca3;font-style:italic}
+  .m .bye{color:var(--muted);font-style:italic}
+
+  /* Result */
+  .hero{max-width:640px;margin:10px auto 0}
+  .bigcheese{font-size:72px;line-height:1;display:inline-block;animation:wobble 2.4s ease-in-out infinite}
+  @keyframes wobble{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg) scale(1.08)}}
+  .hook{font-family:Fraunces,serif;font-weight:800;font-size:clamp(26px,4.5vw,38px);margin:14px 0 18px;line-height:1.15}
+  .hook em{font-style:normal;color:var(--accent)}
+  .how{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;max-width:520px;margin:0 auto 18px}
+  .how .side{background:var(--card);border:2px dashed var(--line);border-radius:16px;padding:14px 10px;font-size:15px}
+  .how kbd{display:inline-block;background:var(--ink);color:#fff;border-radius:8px;padding:4px 10px;font-size:18px;font-family:inherit;margin-bottom:6px}
+  .how .or{font-family:Fraunces,serif;font-weight:800;color:var(--accent);font-size:22px}
+  .lead{font-size:17px;line-height:1.55;color:#4a3f2c;margin:0 0 6px}
+  .chips-title{margin-top:26px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .chips{margin-top:10px!important}
+  .btn.big{font-size:19px;padding:16px 34px;box-shadow:0 8px 20px rgba(217,142,4,.35);animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  .quip{text-align:center;font-size:16px;color:#6b5a3a;font-style:italic;margin:-8px 0 16px;min-height:22px}
+  .winner .verdict{font-size:15px;color:var(--muted)}
+  .winner .quip2{font-size:16px;margin-top:12px;color:#4a3f2c;font-weight:500}
+  .rain{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
+  .rain span{position:absolute;top:-60px;font-size:30px;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+  .trophy{font-size:64px;line-height:1}
+  .winner{background:var(--card);border:2px solid var(--accent);border-radius:26px;padding:28px 22px;max-width:520px;margin:12px auto 22px;text-align:center}
+  .winner svg{width:160px;height:126px}
+  .winner h2{font-family:Fraunces,serif;font-size:38px;margin:6px 0}
+  .podium{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;max-width:620px;margin:0 auto 18px}
+  .pod{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+  .pod small{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+  .pod b{font-family:Fraunces,serif;font-size:18px}
+  .path{max-width:620px;margin:0 auto;font-size:14px;color:#5b4f3b;line-height:1.7}
+  .copied{color:var(--win);font-size:13px;margin-left:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Le Tournoi des <span>Fromages</span></h1>
+</header>
+<main>
+  <!-- Intro -->
+  <section id="intro" class="center">
+    <div class="hero">
+      <div class="bigcheese">🧀</div>
+      <div class="hook">On va découvrir <em>ton fromage préféré</em> !</div>
+      <p class="lead">En France, il existe <b>plus de 1 200 fromages</b><br>(désolé mon Général, 246 c'était un peu juste 😏).<br>On a gardé les <b>32 plus connus et les plus vendus</b>. Les autres ne nous en voudront pas… enfin, on espère.</p>
+      <p class="lead" style="margin-top:14px">On te met deux fromages face à face. Toi, tu tranches 🔪<br>Un seul ressortira vivant du plateau.</p>
+      <div class="how" style="margin-top:20px">
+        <div class="side"><kbd>←</kbd><br>ou clic sur celui de gauche</div>
+        <div class="or">ou</div>
+        <div class="side"><kbd>→</kbd><br>ou clic sur celui de droite</div>
+      </div>
+      <p class="lead" style="margin-bottom:24px">À la fin, tu connaîtras le <b>grand vainqueur</b> 🏆</p>
+    </div>
+    <button class="btn big" id="startBtn">Que le meilleur gagne ! 🧀</button>
+    <div class="chips-title">Les 32 prétendants au trône</div>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <!-- Match -->
+  <section id="match" class="hidden">
+    <div class="meta">
+      <div class="round" id="roundName"></div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="bar"><div id="progress"></div></div>
+    <div class="quip" id="quip"></div>
+    <div class="duel">
+      <div class="cheese" id="cardA" role="button" tabindex="0"></div>
+      <div class="vs">VS</div>
+      <div class="cheese" id="cardB" role="button" tabindex="0"></div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="undoBtn">↶ Oups, je me suis trompé</button>
+      <button class="btn ghost" id="toggleBracket">Voir le tableau</button>
+      <button class="btn ghost" id="restartBtn">Recommencer</button>
+    </div>
+  </section>
+
+  <!-- Result -->
+  <section id="result" class="hidden center">
+    <div class="trophy">🏆</div>
+    <div class="winner" id="winnerCard"></div>
+    <div class="podium" id="podium"></div>
+    <div class="path" id="path"></div>
+    <div class="actions">
+      <button class="btn" id="againBtn">Rejouer 🔄</button>
+      <button class="btn ghost" id="copyBtn">Partager mon verdict 📋</button><span class="copied hidden" id="copied">Copié !</span>
+    </div>
+  </section>
+
+  <div class="bracket-wrap hidden" id="bracketWrap"><div class="bracket" id="bracket"></div></div>
+</main>
+
+<script>
+const CHEESES = [
+  {n:"Emmental", r:"Franche-Comté / Savoie", m:"Vache", t:"Pâte pressée cuite", c:"#f4d35e", s:"holes", d:"Le plus consommé en France, doux et fruité, reconnaissable à ses gros trous."},
+  {n:"Camembert", r:"Normandie", m:"Vache", t:"Pâte molle à croûte fleurie", c:"#f6edd2", s:"round", d:"Le grand classique normand, crémeux à cœur avec une croûte blanche duveteuse."},
+  {n:"Raclette", r:"Savoie", m:"Vache", t:"Pâte pressée non cuite", c:"#f2c14e", s:"wedge", d:"Fondu sur des pommes de terre avec charcuterie : la star des soirées d'hiver."},
+  {n:"Comté", r:"Jura", m:"Vache", t:"Pâte pressée cuite", c:"#f0b429", s:"wedge", d:"AOP phare, aux arômes de noisette qui s'intensifient avec l'affinage."},
+  {n:"Brie de Meaux", r:"Île-de-France", m:"Vache", t:"Pâte molle à croûte fleurie", c:"#f5e6b8", s:"slice", d:"Le « roi des fromages », coulant et aux notes de champignon."},
+  {n:"Bûche de chèvre", r:"Centre / Poitou", m:"Chèvre", t:"Pâte molle", c:"#fbfbf4", s:"log", d:"Fraîche, légèrement acidulée, parfaite chaude sur une salade."},
+  {n:"Roquefort", r:"Aveyron", m:"Brebis", t:"Pâte persillée", c:"#e9e6d6", s:"blue", d:"Le premier fromage AOC de France, puissant, salé, veiné de bleu."},
+  {n:"Reblochon", r:"Savoie", m:"Vache", t:"Pâte pressée non cuite", c:"#f3dca2", s:"round", d:"L'âme de la tartiflette, souple et à la saveur noisetée."},
+  {n:"Tomme de Savoie", r:"Savoie", m:"Vache", t:"Pâte pressée non cuite", c:"#efd68d", s:"wedge", d:"Fromage de montagne à croûte grise, doux et légèrement acidulé."},
+  {n:"Saint-Nectaire", r:"Auvergne", m:"Vache", t:"Pâte pressée non cuite", c:"#f0d79a", s:"round", d:"Pâte souple et fondante aux arômes de noisette et de cave."},
+  {n:"Cantal", r:"Auvergne", m:"Vache", t:"Pâte pressée non cuite", c:"#f1d27a", s:"wedge", d:"L'un des plus anciens fromages de France, jeune, entre-deux ou vieux."},
+  {n:"Mimolette", r:"Nord", m:"Vache", t:"Pâte pressée non cuite", c:"#f28c28", s:"ballcut", d:"Orange vif, au goût de noisette, de plus en plus cassante en vieillissant."},
+  {n:"Munster", r:"Alsace / Vosges", m:"Vache", t:"Pâte molle à croûte lavée", c:"#f2c38b", s:"round", d:"Odeur puissante, cœur doux : à déguster avec un peu de cumin."},
+  {n:"Morbier", r:"Jura", m:"Vache", t:"Pâte pressée non cuite", c:"#f3dfa3", s:"morbier", d:"Reconnaissable à sa raie de charbon végétal, fondant et fruité."},
+  {n:"Beaufort", r:"Savoie", m:"Vache", t:"Pâte pressée cuite", c:"#f2c650", s:"wedge", d:"Le « prince des gruyères », riche et aux notes florales d'alpage."},
+  {n:"Maroilles", r:"Nord / Thiérache", m:"Vache", t:"Pâte molle à croûte lavée", c:"#e9a250", s:"square", d:"Croûte orangée, caractère affirmé : le fromage emblématique du Nord."},
+  {n:"Mozzarella", r:"Italie (adoptée en France)", m:"Vache / Bufflonne", t:"Pâte filée", c:"#ffffff", s:"ball", d:"Fraîche et fondante, incontournable des salades et des pizzas."},
+  {n:"Feta", r:"Grèce (adoptée en France)", m:"Brebis / Chèvre", t:"Pâte saumurée", c:"#ffffff", s:"block", d:"Salée et friable, reine des salades d'été."},
+  {n:"Coulommiers", r:"Île-de-France", m:"Vache", t:"Pâte molle à croûte fleurie", c:"#f3e9cc", s:"round", d:"Cousin du brie, plus petit et plus épais, doux et onctueux."},
+  {n:"Bleu d'Auvergne", r:"Auvergne", m:"Vache", t:"Pâte persillée", c:"#ece7d4", s:"blue", d:"Un bleu crémeux et plus doux que le roquefort, au goût franc."},
+  {n:"Gruyère français", r:"Savoie / Franche-Comté", m:"Vache", t:"Pâte pressée cuite", c:"#f4d35e", s:"holes", d:"Le roi du gratin et du croque-monsieur, avec quelques petits trous."},
+  {n:"Fourme d'Ambert", r:"Auvergne", m:"Vache", t:"Pâte persillée", c:"#efe9d2", s:"blue", d:"Le bleu le plus doux de France, en grand cylindre."},
+  {n:"Pont-l'Évêque", r:"Normandie", m:"Vache", t:"Pâte molle à croûte lavée", c:"#f1cf8a", s:"square", d:"Carré normand, souple et crémeux, plus doux qu'il n'en a l'air."},
+  {n:"Livarot", r:"Normandie", m:"Vache", t:"Pâte molle à croûte lavée", c:"#e8a24a", s:"round", d:"Le « colonel », cerclé de laîches, au caractère bien trempé."},
+  {n:"Saint-Marcellin", r:"Isère", m:"Vache", t:"Pâte molle", c:"#f2e6c4", s:"round", d:"Petit palet coulant, idéal à la cuillère quand il est bien fait."},
+  {n:"Mont d'Or", r:"Jura (Haut-Doubs)", m:"Vache", t:"Pâte molle à croûte lavée", c:"#eedbaa", s:"round", d:"Dans sa boîte en épicéa, à manger chaud au four : l'hiver dans un fromage."},
+  {n:"Ossau-Iraty", r:"Pays basque / Béarn", m:"Brebis", t:"Pâte pressée non cuite", c:"#f3dca0", s:"wedge", d:"Brebis des Pyrénées, à déguster avec de la confiture de cerises noires."},
+  {n:"Abondance", r:"Haute-Savoie", m:"Vache", t:"Pâte mi-cuite", c:"#efce7e", s:"wedge", d:"Meule au talon concave, fruitée avec une pointe d'amertume."},
+  {n:"Chaource", r:"Champagne / Bourgogne", m:"Vache", t:"Pâte molle à croûte fleurie", c:"#f7f1de", s:"round", d:"Crémeux et légèrement acidulé, superbe avec un verre de champagne."},
+  {n:"Époisses", r:"Bourgogne", m:"Vache", t:"Pâte molle à croûte lavée", c:"#e58a3a", s:"round", d:"Lavé au marc de Bourgogne, coulant et très, très expressif."},
+  {n:"Neufchâtel", r:"Normandie (Pays de Bray)", m:"Vache", t:"Pâte molle à croûte fleurie", c:"#f6efdc", s:"heart", d:"Le fromage en forme de cœur : idéal pour une déclaration d'amour."},
+  {n:"Crottin de Chavignol", r:"Centre-Val de Loire", m:"Chèvre", t:"Pâte molle", c:"#f5f0e0", s:"round", d:"Petit chèvre de Sancerre, frais ou bien sec, à griller sur une tartine."}
+];
+
+function cheeseSVG(ch){
+  const c = ch.c, stroke="#8a6d2a";
+  const rind = shade(c,-22);
+  switch(ch.s){
+    case "holes": return `<svg viewBox="0 0 120 96"><path d="M10 78 L110 78 L110 50 L10 30 Z" fill="${c}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><path d="M10 30 L110 50 L100 40 L20 22 Z" fill="${shade(c,10)}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><circle cx="35" cy="56" r="7" fill="${rind}"/><circle cx="72" cy="64" r="9" fill="${rind}"/><circle cx="92" cy="58" r="4" fill="${rind}"/><circle cx="55" cy="70" r="4" fill="${rind}"/></svg>`;
+    case "wedge": return `<svg viewBox="0 0 120 96"><path d="M10 78 L110 78 L110 50 L10 30 Z" fill="${c}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><path d="M10 30 L110 50 L100 40 L20 22 Z" fill="${shade(c,10)}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><path d="M110 50 L110 78" stroke="${rind}" stroke-width="7"/></svg>`;
+    case "round": return `<svg viewBox="0 0 120 96"><ellipse cx="60" cy="62" rx="48" ry="16" fill="${rind}" stroke="${stroke}" stroke-width="2"/><rect x="12" y="40" width="96" height="22" fill="${rind}"/><path d="M12 40 v22 M108 40 v22" stroke="${stroke}" stroke-width="2"/><ellipse cx="60" cy="40" rx="48" ry="16" fill="${c}" stroke="${stroke}" stroke-width="2"/></svg>`;
+    case "slice": return `<svg viewBox="0 0 120 96"><path d="M14 70 L106 70 L106 56 L14 44 Z" fill="${shade(c,-8)}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><path d="M14 44 L106 56 L106 46 L30 30 Z" fill="#fbf7ec" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><path d="M14 70 L14 44" stroke="#fbf7ec" stroke-width="5"/></svg>`;
+    case "ball": return `<svg viewBox="0 0 120 96"><ellipse cx="60" cy="82" rx="38" ry="6" fill="#e8dcc2"/><circle cx="60" cy="50" r="32" fill="${c}" stroke="${stroke}" stroke-width="2"/><ellipse cx="48" cy="38" rx="9" ry="6" fill="#ffffff" opacity=".9"/></svg>`;
+    case "ballcut": return `<svg viewBox="0 0 120 96"><circle cx="60" cy="50" r="34" fill="#8a5a2b" stroke="${stroke}" stroke-width="2"/><path d="M60 50 L94 50 A34 34 0 0 1 60 84 Z" fill="${c}" stroke="${stroke}" stroke-width="2"/></svg>`;
+    case "log": return `<svg viewBox="0 0 120 96"><rect x="14" y="34" width="84" height="34" rx="17" fill="${shade(c,-6)}" stroke="${stroke}" stroke-width="2"/><ellipse cx="98" cy="51" rx="11" ry="17" fill="#fffef8" stroke="${stroke}" stroke-width="2"/><ellipse cx="98" cy="51" rx="4" ry="7" fill="#efe9d6"/></svg>`;
+    case "blue": return `<svg viewBox="0 0 120 96"><path d="M10 78 L110 78 L110 50 L10 30 Z" fill="${c}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><path d="M10 30 L110 50 L100 40 L20 22 Z" fill="${shade(c,6)}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><g fill="#5d7a8c"><circle cx="30" cy="55" r="3"/><circle cx="48" cy="64" r="4"/><circle cx="66" cy="56" r="3"/><circle cx="84" cy="68" r="4"/><circle cx="96" cy="60" r="2.5"/><circle cx="40" cy="46" r="2"/><circle cx="74" cy="72" r="2"/></g></svg>`;
+    case "block": return `<svg viewBox="0 0 120 96"><path d="M20 40 L90 40 L90 78 L20 78 Z" fill="${c}" stroke="${stroke}" stroke-width="2"/><path d="M20 40 L36 26 L106 26 L90 40 Z" fill="#f7f5ee" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><path d="M90 40 L106 26 L106 64 L90 78 Z" fill="#ece8dc" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/></svg>`;
+    case "morbier": return `<svg viewBox="0 0 120 96"><path d="M10 78 L110 78 L110 50 L10 30 Z" fill="${c}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><path d="M10 30 L110 50 L100 40 L20 22 Z" fill="${shade(c,8)}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><path d="M10 55 L110 64" stroke="#3a3530" stroke-width="3"/></svg>`;
+    case "heart": return `<svg viewBox="0 0 120 96"><path d="M60 84 C20 60 14 40 26 28 C38 16 54 22 60 34 C66 22 82 16 94 28 C106 40 100 60 60 84 Z" fill="${c}" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round"/></svg>`;
+    case "square": return `<svg viewBox="0 0 120 96"><path d="M18 46 L84 46 L84 76 L18 76 Z" fill="${c}" stroke="${stroke}" stroke-width="2"/><path d="M18 46 L36 30 L102 30 L84 46 Z" fill="${shade(c,8)}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/><path d="M84 46 L102 30 L102 60 L84 76 Z" fill="${shade(c,-10)}" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/></svg>`;
+  }
+}
+function shade(hex,p){
+  let n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;
+  const f=v=>Math.max(0,Math.min(255,Math.round(v+(p/100)*255)));
+  return "#"+((1<<24)+(f(r)<<16)+(f(g)<<8)+f(b)).toString(16).slice(1);
+}
+
+const ROUNDS = ["Seizièmes de finale","Huitièmes de finale","Quarts de finale","Demi-finales","Finale"];
+const ROUND_FUN = ["🔔 Seizièmes de finale","🥊 Huitièmes de finale","⚔️ Quarts de finale","🔥 Demi-finales","👑 LA GRANDE FINALE"];
+const QUIPS = [
+  "Choix cornélien… prends ton temps (mais pas trop, ça tourne).",
+  "Ça sent le roussi pour l'un des deux.",
+  "Le suspense est à son comble. L'odeur aussi.",
+  "Pas de jaloux… enfin si, un peu.",
+  "Écoute ton cœur. Ou ton estomac.",
+  "Pense à ta prochaine raclette avant de répondre.",
+  "Un seul restera sur le plateau.",
+  "Aucune pression. Enfin, si : pâte pressée.",
+  "Tu sens que ça va se jouer à une croûte près ?",
+  "Il n'y a pas de mauvaise réponse. Juste des fromages déçus.",
+  "Ton grand-père te regarde. Choisis bien.",
+  "Fais comme au marché : fie-toi à ton nez.",
+  "32 fromages au départ, un seul à l'arrivée. Pas de quartier."
+];
+const FINAL_QUIPS = ["C'est le moment de vérité. Respire.","Tout le plateau retient son souffle…"];
+const WIN_QUIPS = [
+  "Tu as du goût. Et maintenant, tu as faim.",
+  "Le peuple a parlé. Enfin, toi. Mais c'est pareil.",
+  "Il mérite une baguette d'honneur.",
+  "Les 31 autres sont partis bouder au frais.",
+  "Une victoire au caractère bien affiné."
+];
+const pickOne = a => a[Math.floor(Math.random()*a.length)];
+const LAST = ROUNDS.length-1, TOTAL = 31;
+let state, history;
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function newTournament(){
+  const ids = shuffle(CHEESES.map((_,i)=>i));
+  const rounds = [Array.from({length:16},(_,k)=>({a:ids[2*k],b:ids[2*k+1],w:null}))];
+  for(const n of [8,4,2,1]) rounds.push(Array.from({length:n},()=>({a:null,b:null,w:null})));
+  state = {rounds, r:0, m:0, done:0};
+  history = [];
+}
+
+function advance(winner){
+  const {rounds,r,m} = state;
+  history.push(JSON.stringify(state));
+  rounds[r][m].w = winner;
+  // propagate
+  if(r<LAST){
+    const nxt = rounds[r+1][Math.floor(m/2)];
+    if(m%2===0) nxt.a = winner; else nxt.b = winner;
+  }
+  state.done++;
+  if(m+1 < rounds[r].length){ state.m++; }
+  else if(r<LAST){ state.r++; state.m=0; }
+  else { state.finished = true; }
+  render();
+}
+
+function undo(){
+  if(!history.length) return;
+  state = JSON.parse(history.pop());
+  render();
+}
+
+function cardHTML(i){
+  const ch = CHEESES[i];
+  return `${cheeseSVG(ch)}<h2>${ch.n}</h2>
+    <div class="tags"><span class="tag">${ch.m}</span><span class="tag">${ch.t}</span><span class="tag">${ch.r}</span></div>
+    <p class="desc">${ch.d}</p>`;
+}
+
+let locked=false;
+function pick(side){
+  if(locked||state.finished) return;
+  const mt = state.rounds[state.r][state.m];
+  const winner = side==="A"?mt.a:mt.b;
+  locked=true;
+  $("card"+side).classList.add("picked");
+  $("card"+(side==="A"?"B":"A")).classList.add("dropped");
+  setTimeout(()=>{locked=false;advance(winner)},380);
+}
+
+const $ = id=>document.getElementById(id);
+function cheeseRain(){
+  const box=document.createElement("div");box.className="rain";
+  const em=["🧀","🧀","🧀","🍷","🥖","🎉"];
+  for(let i=0;i<45;i++){const sp=document.createElement("span");sp.textContent=pickOne(em);
+    sp.style.left=Math.random()*100+"vw";sp.style.animationDuration=(2.2+Math.random()*2.2)+"s";sp.style.animationDelay=(Math.random()*1.2)+"s";box.appendChild(sp);}
+  document.body.appendChild(box);setTimeout(()=>box.remove(),5000);
+}
+
+function render(){
+  $("intro").classList.add("hidden");
+  if(state.finished){ showResult(); renderBracket(); return; }
+  $("match").classList.remove("hidden");
+  $("result").classList.add("hidden");
+  const mt = state.rounds[state.r][state.m];
+  const total = state.rounds[state.r].length;
+  $("roundName").textContent = ROUND_FUN[state.r];
+  $("quip").textContent = state.r===LAST ? pickOne(FINAL_QUIPS) : pickOne(QUIPS);
+  $("count").textContent = (total>1?`Duel ${state.m+1} / ${total} · `:"")+`${state.done} / ${TOTAL} duels joués`;
+  $("progress").style.width = (state.done/TOTAL*100)+"%";
+  for(const [side,i] of [["A",mt.a],["B",mt.b]]){
+    const el=$("card"+side); el.className="cheese"; el.innerHTML = cardHTML(i)+`<div class="key">${side==="A"?"← touche gauche":"touche droite →"}</div>`;
+  }
+  $("undoBtn").disabled = !history.length;
+  renderBracket();
+}
+
+function renderBracket(){
+  const names = i => i==null?null:CHEESES[i].n;
+  const cols = state.rounds.map((rd,ri)=>{
+    const ms = rd.map((mt,mi)=>{
+      const cur = !state.finished && ri===state.r && mi===state.m;
+      const row = (x)=>{
+        if(x==null) return `<div class="tbd">—</div>`;
+        const cls = mt.w==null?"":(mt.w===x?"w":"l");
+        return `<div class="${cls}">${names(x)}</div>`;
+      };
+      return `<div class="m ${cur?"current":""}">${row(mt.a)}${row(mt.b)}</div>`;
+    }).join("");
+    return `<div class="col"><h3>${ROUNDS[ri].replace(" de finale","")}</h3><div class="body">${ms}</div></div>`;
+  });
+  const champ = state.finished ? `<div class="col"><h3>Vainqueur</h3><div class="body"><div class="m current"><div class="w">🏆 ${names(state.rounds[LAST][0].w)}</div></div></div></div>`:"";
+  $("bracket").innerHTML = cols.join("")+champ;
+}
+
+function showResult(){
+  $("match").classList.add("hidden");
+  $("result").classList.remove("hidden");
+  $("bracketWrap").classList.remove("hidden");
+  const R = state.rounds, f = R[LAST][0], w = f.w, ch = CHEESES[w];
+  const runner = f.a===w?f.b:f.a;
+  const semis = R[LAST-1].map(m=>m.a===m.w?m.b:m.a);
+  $("winnerCard").innerHTML = `<div class="verdict">Le verdict est tombé : ton fromage préféré est…</div>${cheeseSVG(ch)}<h2>${ch.n} !</h2>
+    <div class="tags"><span class="tag">${ch.m}</span><span class="tag">${ch.t}</span><span class="tag">${ch.r}</span></div><p class="desc">${ch.d}</p><div class="quip2">${pickOne(WIN_QUIPS)}</div>`;
+  cheeseRain();
+  $("podium").innerHTML = `<div class="pod"><small>Finaliste</small><b>${CHEESES[runner].n}</b></div>`+
+    semis.map(s=>`<div class="pod"><small>Demi-finaliste</small><b>${CHEESES[s].n}</b></div>`).join("");
+  // parcours
+  const beaten=[];
+  R.forEach((rd,ri)=>rd.forEach(m=>{ if(m.w===w && m.a!=null && m.b!=null) beaten.push(`${ROUNDS[ri]} : ${CHEESES[m.a===w?m.b:m.a].n}`); }));
+  $("path").innerHTML = `<b>Son parcours de champion</b><br>`+beaten.join(" · ");
+  state.summary = `🧀 Verdict du Tournoi des Fromages : mon préféré, c'est le ${ch.n} ! 🏆\nFinale contre ${CHEESES[runner].n}.\nParcours — ${beaten.join(" / ")}`;
+}
+
+$("chips").innerHTML = CHEESES.map(c=>`<span class="chip">${c.n}</span>`).join("");
+$("startBtn").onclick = ()=>{newTournament();render()};
+$("againBtn").onclick = ()=>{$("bracketWrap").classList.add("hidden");$("toggleBracket").textContent="Voir le tableau";newTournament();render()};
+$("restartBtn").onclick = $("againBtn").onclick;
+$("undoBtn").onclick = undo;
+$("cardA").onclick = ()=>pick("A");
+$("cardB").onclick = ()=>pick("B");
+$("toggleBracket").onclick = ()=>{
+  const h = $("bracketWrap").classList.toggle("hidden");
+  $("toggleBracket").textContent = h?"Voir le tableau":"Masquer le tableau";
+};
+$("copyBtn").onclick = async ()=>{
+  try{ await navigator.clipboard.writeText(state.summary); $("copied").classList.remove("hidden"); setTimeout(()=>$("copied").classList.add("hidden"),1800);}catch(e){}
+};
+document.addEventListener("keydown",e=>{
+  if($("match").classList.contains("hidden")) return;
+  if(e.key==="ArrowLeft") pick("A");
+  else if(e.key==="ArrowRight") pick("B");
+  else if((e.key==="z"&&(e.ctrlKey||e.metaKey))||e.key==="Backspace") undo();
+});
+["cardA","cardB"].forEach(id=>$(id).addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick(id.slice(-1))}}));
+</script>
+</body>
+</html>
