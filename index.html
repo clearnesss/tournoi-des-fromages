@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Le Tournoi des Fromages</title>
+<meta name="description" content="32 fromages, 31 duels, un seul vainqueur. Découvre enfin ton fromage préféré !">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧀</text></svg>">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://clearnesss.github.io/tournoi-des-fromages/">
+<meta property="og:title" content="🧀 Le Tournoi des Fromages">
+<meta property="og:description" content="32 fromages, 31 duels, un seul vainqueur. Découvre enfin ton fromage préféré !">
+<meta property="og:image" content="https://clearnesss.github.io/tournoi-des-fromages/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="🧀 Le Tournoi des Fromages">
+<meta name="twitter:description" content="32 fromages, 31 duels, un seul vainqueur. Découvre enfin ton fromage préféré !">
+<meta name="twitter:image" content="https://clearnesss.github.io/tournoi-des-fromages/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -366,7 +380,7 @@ function showResult(){
   const beaten=[];
   R.forEach((rd,ri)=>rd.forEach(m=>{ if(m.w===w && m.a!=null && m.b!=null) beaten.push(`${ROUNDS[ri]} : ${CHEESES[m.a===w?m.b:m.a].n}`); }));
   $("path").innerHTML = `<b>Son parcours de champion</b><br>`+beaten.join(" · ");
-  state.summary = `🧀 Verdict du Tournoi des Fromages : mon préféré, c'est le ${ch.n} ! 🏆\nFinale contre ${CHEESES[runner].n}.\nParcours — ${beaten.join(" / ")}`;
+  state.summary = `🧀 Verdict du Tournoi des Fromages : mon préféré, c'est le ${ch.n} ! 🏆\nFinale contre ${CHEESES[runner].n}.\nParcours — ${beaten.join(" / ")}\n\nEt toi, c'est quoi ton fromage préféré ? 👉 https://clearnesss.github.io/tournoi-des-fromages/`;
 }
 
 $("chips").innerHTML = CHEESES.map(c=>`<span class="chip">${c.n}</span>`).join("");
